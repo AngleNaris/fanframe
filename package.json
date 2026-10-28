@@ -1,0 +1,59 @@
+{
+  "name": "fanframe",
+  "version": "1.10.0-beta.1",
+  "description": "FanFrame: interface refinements for DeepSeek Harness, with sharp corners, readable chat, restrained motion and sidebar tools.",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "locale/en.json",
+    "locale/zh.json",
+    "icon.svg",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": "0.2.1-rc.3"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "tag": "beta"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "ui",
+    "theme",
+    "fanframe"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AngleNaris/fanframe.git"
+  },
+  "homepage": "https://github.com/AngleNaris/fanframe#readme",
+  "bugs": {
+    "url": "https://github.com/AngleNaris/fanframe/issues"
+  },
+  "license": "MIT"
+}
