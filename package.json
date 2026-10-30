@@ -1,7 +1,7 @@
 {
   "name": "fanframe",
   "version": "1.10.0-beta.8",
-  "description": "FanFrame: interface refinements for DeepSeek Harness, with sharp corners, readable chat, restrained motion and sidebar tools.",
+  "description": "FanFrame (繁界, “Fanxing’s realm”) lightly polishes the DeepSeek Harness Desktop UI for a more comfortable everyday experience.",
   "type": "module",
   "main": "./lib/index.js",
   "exports": {
