@@ -1,6 +1,6 @@
 {
   "name": "fanframe",
-  "version": "1.10.0-beta.1",
+  "version": "1.10.0-beta.7",
   "description": "FanFrame: interface refinements for DeepSeek Harness, with sharp corners, readable chat, restrained motion and sidebar tools.",
   "type": "module",
   "main": "./lib/index.js",
