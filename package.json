@@ -1,6 +1,6 @@
 {
   "name": "fanframe",
-  "version": "1.10.0-beta.7",
+  "version": "1.10.0-beta.8",
   "description": "FanFrame: interface refinements for DeepSeek Harness, with sharp corners, readable chat, restrained motion and sidebar tools.",
   "type": "module",
   "main": "./lib/index.js",
@@ -24,7 +24,7 @@
     "LICENSE"
   ],
   "engines": {
-    "dsh": "0.2.1-rc.3"
+    "dsh": ">=0.2.1-rc.1 <=0.2.1-rc.6"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

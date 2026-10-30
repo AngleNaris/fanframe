@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.0-beta.8 — 2026-10-30
+
+- Expand the declared DSH engine range to `>=0.2.1-rc.1 <=0.2.1-rc.6`, including both endpoints, as requested by the maintainer.
+- Update the package version and client diagnostic marker. Keep beta.7 interface behavior, RPC, message handling and persistence unchanged.
+
+The actual verification baseline remains DSH Desktop `0.2.1-rc.3`; the other versions in the declared range have not been individually tested. This range excludes `0.2.1-rc.7` and the stable `0.2.1` release.
+
 ## 1.10.0-beta.7 — 2026-10-30
 
 This release includes the local beta.2–beta.6 improvements since the public beta.1:

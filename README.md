@@ -2,7 +2,7 @@
 
 繁界为 DeepSeek Harness 整理界面细节：直角设计、聊天富文本层次、克制动效、侧栏布局和插件列表工具。中文显示名为“繁界”，英文显示名为“FanFrame”，npm 包名为 `fanframe`。
 
-这是 `1.10.0-beta.7` 测试版本。插件读取原生界面的语义标记和部分样式模块，当前仅声明支持 **DSH Desktop 0.2.1-rc.3**。没有验证其他版本，也不承诺跨版本样式兼容。
+这是 `1.10.0-beta.8` 测试版本。安装兼容范围为 **DSH Desktop `0.2.1-rc.1` 至 `0.2.1-rc.6`（含两端）**，对应 `>=0.2.1-rc.1 <=0.2.1-rc.6`。实际验证基线仍为 `0.2.1-rc.3`，其余版本未逐一实测；插件依赖原生语义标记和部分样式模块，不保证跨版本样式完全一致。
 
 ## 功能
 
@@ -17,7 +17,7 @@
 
 ## 安装与迁移
 
-通过 DSH 插件管理器安装 `fanframe@1.10.0-beta.7`。`latest` 和 `beta` 标签均用于这一测试版；标签名称不代表稳定版或扩大兼容范围。
+通过 DSH 插件管理器安装 `fanframe@1.10.0-beta.8`。`latest` 和 `beta` 标签均用于这一测试版；标签名称不代表稳定版或扩大兼容范围。
 
 `fanframe` 是新包名，不是旧 `fan-de-hai` 的 npm 原位升级。迁移时按顺序操作：
 
@@ -42,7 +42,7 @@
 
 FanFrame is a client-side interface-refinement plugin for DeepSeek Harness. It provides sharp corners, readable chat styling, restrained motion, sidebar refinements, plugin-list tools and subagent catalog enhancements.
 
-The npm package is `fanframe`; the Chinese display name is 繁界. This beta targets DSH Desktop `0.2.1-rc.3` only. Disable the legacy `fan-de-hai` package before enabling FanFrame. Never enable both together. This release does not replace image viewers or claim to repair image upload or storage.
+The npm package is `fanframe`; the Chinese display name is 繁界. The declared DSH Desktop engine range is `>=0.2.1-rc.1 <=0.2.1-rc.6`, inclusive. The verification baseline remains `0.2.1-rc.3`; other versions in this range have not been individually tested. Disable the legacy `fan-de-hai` package before enabling FanFrame. Never enable both together. This release does not replace image viewers or claim to repair image upload or storage.
 
 ## License
 
