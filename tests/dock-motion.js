@@ -1,0 +1,73 @@
+window.runDockMotionRegression = async function () {
+  const results = [], check = (name, pass, actual) => results.push({name, pass: !!pass, actual});
+  const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+  const effects = {}; plugin.apply({effect(fn, name) { effects[name] = fn; }});
+  const originalMedia = window.matchMedia;
+  const media = new EventTarget(); media.matches = false; window.matchMedia = () => media;
+  const style = document.createElement('style');
+  style.textContent = '.fixture_goalbar{box-sizing:border-box;width:320px;height:36px;display:flex;align-items:center;padding:4px 5px 4px 12px}.fixture_goalbar.fixture_editBar{height:auto;min-height:36px;align-items:flex-end}';
+  document.head.append(style);
+  const dock = document.createElement('div'); dock.dataset.goalBar = 'true';
+  const bar = document.createElement('div'); bar.className = 'fixture_goalbar'; dock.append(bar);
+  function edit(open) {
+    bar.className = open ? 'fixture_goalbar fixture_editBar' : 'fixture_goalbar';
+    bar.innerHTML = open ? '<div contenteditable="true" style="height:96px">Draft objective</div><button>Cancel</button>' : '<span>Objective</span><button>Edit</button>';
+  }
+  edit(false); document.body.append(dock);
+  let dispose, todo;
+  try {
+    dispose = effects['fan-de-hai: card-disclosure-motion']();
+    edit(true); await flush();
+    let animation = bar.getAnimations()[0];
+    check('GoalBar actual styled card expands', !!animation && dock.getAnimations().length === 0, bar.getAnimations().length);
+    animation.pause(); animation.currentTime = 90;
+    let middle = bar.getBoundingClientRect().height;
+    check('GoalBar height interpolates 36 to 104', middle > 36 && middle < 104, middle);
+    check('editing content remains owned by host', bar.querySelector('[contenteditable]').textContent === 'Draft objective', bar.textContent);
+    edit(false); await flush(); animation = bar.getAnimations()[0];
+    check('GoalBar cancel reverses from current height', !!animation && Math.abs(parseFloat(animation.effect.getKeyframes()[0].height) - middle) < 1, animation && animation.effect.getKeyframes()[0].height);
+    check('GoalBar cancel does not retain editor ghost', !bar.querySelector('[contenteditable]'), bar.innerHTML);
+    animation.finish(); await flush();
+    check('GoalBar returns to 36px with no inline residue', bar.getBoundingClientRect().height === 36 && bar.style.cssText === '', {height:bar.getBoundingClientRect().height, style:bar.style.cssText});
+    edit(true); await flush(); bar.getAnimations()[0].finish(); await flush();
+    check('GoalBar expanded natural height restored', bar.getBoundingClientRect().height === 104 && bar.style.height === '', bar.getBoundingClientRect().height);
+    edit(false); await flush(); media.matches = true; media.dispatchEvent(new Event('change')); await flush();
+    check('GoalBar reduced motion cancels immediately', bar.getAnimations().length === 0 && bar.getBoundingClientRect().height === 36, bar.getAnimations().length);
+    edit(true); await flush();
+    check('GoalBar reduced motion does not animate edit', bar.getAnimations().length === 0, bar.getAnimations().length);
+    media.matches = false; edit(false); await flush(); dispose(); dispose = null;
+    check('GoalBar unload preserves cancel state', bar.getAnimations().length === 0 && !bar.querySelector('[contenteditable]') && bar.style.cssText === '', bar.style.cssText);
+    media.matches = false;
+    todo = document.createElement('section'); todo.dataset.testid = 'todo-panel';
+    todo.style.cssText = 'box-sizing:border-box;width:400px;flex:none;overflow:hidden';
+    todo.innerHTML = '<div style="display:flex;flex-direction:column;gap:8px;padding:6px 12px"><button aria-expanded="false" style="height:24px;border:0;padding:0">Tasks</button></div>';
+    const todoBody = todo.firstElementChild, header = todoBody.firstElementChild;
+    const list = document.createElement('ul'); list.style.cssText = 'display:flex;flex-direction:column;gap:8px;max-height:180px;overflow-y:auto;margin:0;padding:0';
+    list.innerHTML = Array.from({length:12}, (_,i) => '<li style="flex:none;height:20px">Task '+i+'</li>').join('');
+    document.body.append(todo);
+    dispose = effects['fan-de-hai: card-disclosure-motion']();
+    header.setAttribute('aria-expanded', 'true'); todoBody.append(list); await flush();
+    animation = todo.getAnimations()[0];
+    check('actual TodoPanel header starts expansion', !!animation, todo.getAnimations().length);
+    animation.pause(); animation.currentTime = 90;
+    middle = todo.getBoundingClientRect().height;
+    check('TodoPanel animates capped list height', middle > 36 && middle < 224 && list.getBoundingClientRect().height === 180, {middle,list:list.getBoundingClientRect().height});
+    animation.finish(); await flush();
+    check('TodoPanel settles to 224px not scrollHeight', todo.getBoundingClientRect().height === 224, todo.getBoundingClientRect().height);
+    header.setAttribute('aria-expanded', 'false'); list.remove(); await flush();
+    animation = todo.getAnimations()[0];
+    check('actual TodoPanel closes after list unmount', !!animation && !list.isConnected, todo.getAnimations().length);
+    animation.pause(); animation.currentTime = 90; middle = todo.getBoundingClientRect().height;
+    header.setAttribute('aria-expanded', 'true'); todoBody.append(list); await flush();
+    animation = todo.getAnimations()[0];
+    check('TodoPanel fast reopen uses current height', Math.abs(parseFloat(animation.effect.getKeyframes()[0].height)-middle)<1 && todo.getAnimations().length===1, animation.effect.getKeyframes()[0].height);
+    animation.finish(); await flush();
+    header.setAttribute('aria-expanded', 'false'); list.remove(); await flush(); todo.getAnimations()[0].finish(); await flush();
+    check('TodoPanel restores native overflow and collapsed height', todo.getBoundingClientRect().height===36 && todo.style.overflow==='hidden' && todo.style.height==='', {height:todo.getBoundingClientRect().height,style:todo.style.cssText});
+    header.setAttribute('aria-expanded', 'true'); todoBody.append(list); await flush(); media.matches=true;media.dispatchEvent(new Event('change'));await flush();
+    check('TodoPanel reduced-motion cancels correctly', todo.getAnimations().length===0 && todo.getBoundingClientRect().height===224, todo.getBoundingClientRect().height);
+    dispose();dispose=null;check('TodoPanel unload retains real list', list.isConnected && header.getAttribute('aria-expanded')==='true',header.getAttribute('aria-expanded'));
+  } catch(e) { check('unexpected exception', false, e.stack); }
+  finally { if(dispose) dispose(); dock.remove(); if(todo) todo.remove(); style.remove(); window.matchMedia = originalMedia; }
+  return {passed:results.filter(r=>r.pass).length,total:results.length,results};
+};

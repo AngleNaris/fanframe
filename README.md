@@ -19,9 +19,9 @@
 
 ## 版本与安装
 
-当前公开版本为 `1.10.0-beta.8`，npm 包名为 `fanframe`。中文显示名为“繁界”，英文显示名为“FanFrame”。
+当前测试版本为 `1.10.0-beta.16`，npm 包名为 `fanframe`。中文显示名为“繁界”，英文显示名为“FanFrame”。
 
-在 DSH 插件管理器中添加 `fanframe@1.10.0-beta.8`，安装后启用插件。`latest` 和 `beta` 标签目前均指向这一测试版；`latest` 不代表稳定版。
+在 DSH 插件管理器中添加 `fanframe@1.10.0-beta.16`，安装后启用插件。也可以使用 `fanframe@beta` 获取测试渠道版本。`latest` 标签独立维护，不代表稳定版。
 
 ### 兼容范围
 
@@ -65,7 +65,7 @@ FanFrame (繁界) means “Fanxing’s realm.” This plugin lightly polishes th
 
 ### Installation and compatibility
 
-Install `fanframe@1.10.0-beta.8` through the DSH Plugin Manager. The npm package is `fanframe`; the Chinese display name is 繁界. Both `latest` and `beta` currently refer to this beta release, not a stable release.
+Install `fanframe@1.10.0-beta.16` through the DSH Plugin Manager, or use `fanframe@beta` for the beta channel. The npm package is `fanframe`; the Chinese display name is 繁界. The `latest` tag is maintained independently and does not indicate a stable release.
 
 The declared DSH Desktop engine range is `>=0.2.1-rc.1 <=0.2.1-rc.6`, inclusive. The actual verification baseline remains `0.2.1-rc.3`; other versions in this range have not been individually tested. Some features depend on host UI structures and compatibility interfaces, so behavior can differ between DSH versions.
 

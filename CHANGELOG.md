@@ -1,5 +1,54 @@
 # Changelog
 
+## 1.10.0-beta.16 — 2026-11-01 (prerelease)
+
+- Match the native model-name text exactly: the slider rail, active fill and right-hand current values all use the same host tertiary label token as the native Codex model row, without independent color mixing or opacity.
+- Preserve the 1px stroke, ticks, diamond, hover, geometry and all model/preference behavior. Cover exact color equality in both themes and live palette changes.
+
+## 1.10.0-beta.15 — 2026-11-01 (local, unpublished)
+
+- Subdue the model-slider rail and active fill against the host background, darkening both in the dark theme while keeping the rail slightly more prominent than the unchanged ticks.
+- Preserve the single 1px stroke, geometry, diamond, hover, motion and all selection/persistence behavior. Add a targeted dark-theme paint regression.
+
+## 1.10.0-beta.14 — 2026-11-01 (local, unpublished)
+
+- Correct the overly heavy model-slider rail reported in the installed screenshot: use a single 1px visible rail/fill and remove both engraved-edge layers.
+- Preserve the original length, endpoint alignment, centered 6px ticks, 10px diamond, hover, transitions and native input geometry. Keep all selection and persistence code unchanged.
+- Update thin-stroke and symmetric-exposure regression checks; installed visual acceptance remains separate.
+
+## 1.10.0-beta.13 — 2026-11-01 (local, unpublished)
+
+- Apply the approved local slider refinement: enlarge the diamond square from 8px to 10px and keep it in front of the scale; center 6px tick marks across the unchanged 2px rail with equal exposure above and below.
+- Add restrained, solid half-pixel internal rail edges for a shallow engraved appearance, without outer shadows, gradients, extra borders or layout changes. Keep the neutral rail subtly stronger than ticks in both light and dark themes.
+- Preserve endpoint alignment, native input geometry, purple thumb-only hover, transitions and all model/preference selection, confirmation and persistence logic. Extend geometry, layering and theme-paint regressions; real Desktop acceptance remains separate.
+
+## 1.10.0-beta.12 — 2026-11-01 (local, unpublished)
+
+- Align the first and last model-slider tick edges inside the unchanged rail endpoints. Keep centered intermediate ticks, track length, 2px stroke, thumb behavior and persistence untouched.
+- Add precise browser-geometry regressions for both endpoint edges; the previous version protruded by half a CSS pixel on each side.
+
+## 1.10.0-beta.11 — 2026-11-01 (local, unpublished)
+
+- Refine the approved compact model sliders with square diamond thumbs, purple thumb-only hover, muted theme-adaptive rails and clearer ticks. Preserve the existing track length, 2px stroke and native model entry.
+- Add interruptible 100ms pointer and 140ms discrete position transitions to the visual thumb and fill. Keep the native range input for interaction/accessibility and respect reduced motion.
+- Preserve the released effort through synchronous stale snapshots and the gap between RPC completion and authoritative projection. Unlock only on confirmation; handle native error snapshots, bounded sync uncertainty, model changes and unload cleanup without a second persistence path.
+- Expand synthetic engineering regressions for pending-value stability, early RPC success, delayed confirmation, rollback, hover, motion, light-theme readability and cleanup. These checks do not substitute for installed Desktop VIS/FLOW or real persistence acceptance.
+
+## 1.10.0-beta.10 — 2026-10-31 (local, unpublished)
+
+- Read model-control ordering from the real Slot entry's `options.priority`, placing the decorator above the original Codex occupant rather than silently below it.
+- Preserve Codex's supplied label fallback and mount the existing slider bridge when rc.5 does not provide a child-slot renderer. Do not replace the native model picker or its controllers.
+- Correct the regression fixture to match render-erased Slot entries and cover the no-child-renderer path. Keep real Desktop VIS/FLOW and persistence checks separate from synthetic engineering tests.
+
+## 1.10.0-beta.9 — 2026-10-31 (local candidate, not installed or published)
+
+- Animate the outer occupied height when a task dock or goal first mounts, alongside the existing content fade. Yield immediately to interaction, native animation, reduced motion and removal; restore owned styles on cleanup.
+- Fade newly available activity, usage/cache and context-meter information without replaying ordinary numeric updates or historical content.
+- Add the approved compact, square-thumb sliders for Codex reasoning effort, supported speed modes and output detail. Decorate the original registered component and reuse its controllers; preserve its model search/selection, native hints and persistence scope.
+- Preview drag/keyboard changes and save only the final value without closing the menu. Preserve default-value semantics, pending/readonly/locked states, failure rollback, capability changes and unload cleanup. Keep unknown controllers/capabilities on the native path.
+
+This candidate is engineering-verified with synthetic controllers and real browser DOM/WAAPI fixtures only. DSH `0.2.1-rc.5` product VIS/FLOW and Host persistence are not verified; no installed Desktop files, npm tags or published archives are changed.
+
 ## 1.10.0-beta.8 — 2026-10-30
 
 - Expand the declared DSH engine range to `>=0.2.1-rc.1 <=0.2.1-rc.6`, including both endpoints, as requested by the maintainer.
