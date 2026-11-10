@@ -1,5 +1,40 @@
 # Changelog
 
+## 1.10.0-beta.23 — 2026-11-10 (prerelease)
+
+- Restore the compact model controls on DSH 0.2.2-rc.1: the shipped Codex picker stopped declaring a locale tag and stopped rendering the optional model-label child slot, so the previous registration gate and mount point both went unused and the controls silently disappeared.
+- Identify the picker by structure instead of a locale tag, and attach the panel to the open model menu itself, releasing it when that menu leaves the document. The picker component, its injected controllers and every selection/preference path are forwarded untouched.
+- Fix the stale publication checks (version, DSH range) and cover the locale-free, label-less picker shape in the isolated regression.
+
+## 1.10.0-beta.22 — 2026-11-08 (local, unpublished)
+
+- Widen the declared DSH compatibility range from `>=0.2.1-rc.1 <=0.2.1-rc.6` to `>=0.2.1-rc.1 <0.4.0-0`, so DSH 0.2.2-rc.1 and later 0.2.x/0.3.x builds load instead of being refused by the host's compatibility gate.
+- No runtime or styling change in this release; the widened range is still to be verified against DSH 0.2.2-rc.1 before publishing.
+
+## 1.10.0-beta.21 — 2026-11-04 (local, unpublished)
+
+- Apply the icon rail to desktop shells without a Windows titlebar, such as the browser-served web client, instead of leaving the native 280px sidebar there. Fail closed on an unparsed frame grid exactly as before.
+- Hand the folded state back to the host's own collapsed icon strip on those shells, so its expand and new-session controls stay reachable; the rail returns when the sidebar expands. Windows titlebar folding and the Pocket drawer path are unchanged.
+
+## 1.10.0-beta.20 — 2026-11-04 (local, unreleased)
+
+## 1.10.0-beta.19 — 2026-11-03
+
+- Hide Pocket's session-log export entry only inside the adapted mobile drawer, using its stable data attribute rather than labels or disabled state. Keep its node, handler and native eligibility unchanged.
+- Flatten its drawer-action wrapper within the rail so the hidden entry leaves no empty slot; preserve an available file-explorer sibling and other disabled controls. Desktop and non-drawer footer actions remain unchanged.
+- Cover disabled/enabled and localized exports, dynamic entries, sibling visibility, empty-slot removal, close/reopen, unload and native-handler restoration.
+
+## 1.10.0-beta.18 — 2026-11-03 (local, unpublished)
+
+- Keep native sidebar More and account body-portals above the active Pocket drawer, deriving the layer from its actual column rather than overriding positioning or React ownership. Restore the original layer on close, layout changes and unload; desktop remains unchanged.
+- Add portal-layer and cleanup regressions after the running Pocket UI exposed the native menu below the drawer.
+
+## 1.10.0-beta.17 — 2026-11-03 (local, unpublished)
+
+- Restore the existing icon rail and session list inside an open dsh-pocket mobile drawer without requiring Windows titlebar chrome. Preserve Pocket's outer grid, drawer positioning, backdrop and full-width conversation.
+- Release the adapter when the drawer closes; handle late mobile markers, repeated opening and layout-mode changes without stale styles, duplicated controls or moved React nodes. Keep the desktop rail unchanged and give drawer-only icon controls 44px touch targets.
+- Add regressions for mobile activation, full-width content, cleanup, original actions, focus and return to the desktop layout. Product visual and interaction acceptance remain separate from the fixtures.
+
 ## 1.10.0-beta.16 — 2026-11-01 (prerelease)
 
 - Match the native model-name text exactly: the slider rail, active fill and right-hand current values all use the same host tertiary label token as the native Codex model row, without independent color mixing or opacity.

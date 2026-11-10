@@ -12,14 +12,14 @@ function check(name, fn) { fn(); checks.push(name); }
 
 check('package identity and beta publication channel', () => {
   assert.equal(pkg.name, 'fanframe');
-  assert.equal(pkg.version, '1.10.0-beta.16');
+  assert.equal(pkg.version, '1.10.0-beta.23');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.publishConfig.tag, 'beta');
   assert.equal(pkg.publishConfig.access, 'public');
   assert.equal(pkg.license, 'MIT');
 });
-check('explicit inclusive DSH rc.1–rc.6 range and no install lifecycle', () => {
-  assert.equal(pkg.engines.dsh, '>=0.2.1-rc.1 <=0.2.1-rc.6');
+check('explicit DSH lower bound with an open next-major ceiling and no install lifecycle', () => {
+  assert.equal(pkg.engines.dsh, '>=0.2.1-rc.1 <0.4.0-0');
   assert.equal(pkg.dsh.client.platform, 'web');
   assert.deepEqual(pkg.dsh.client.inject, []);
   assert.equal(pkg.scripts, undefined);

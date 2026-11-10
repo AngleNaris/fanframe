@@ -23,7 +23,7 @@ window.runModelSliderRegression=async function(){
   let finishSelect,finishPreference;
   const face={available:true,directory:{getSnapshot:()=>ds,subscribe(fn){dsListeners.add(fn);return()=>dsListeners.delete(fn);}},select(selection){selects.push(selection);ds={...ds,status:'selecting'};publishDS();return new Promise(resolve=>{finishSelect=(ok,deferProjection=false,fulfillFailure=false)=>{ds={...ds,status:ok?'ready':'error',current:ok&&!deferProjection?selection:ds.current};publishDS();resolve(ok||fulfillFailure);if(ok&&deferProjection)return()=>{ds={...ds,current:selection};publishDS();};};});},preference:{getSnapshot:()=>ps,subscribe(fn){psListeners.add(fn);return()=>psListeners.delete(fn);},set(patch){patches.push(patch);const before=ps;ps={...ps,...patch,saving:true,writable:false,error:false};publishPS();return new Promise(resolve=>{finishPreference=ok=>{ps={...(ok?ps:before),saving:false,writable:true,error:!ok};publishPS();resolve();};});}}};
   function NativeModel(){}
-  const native={component:NativeModel,options:{name:'conversation.input.model',priority:-10},locale:'settings.codexSubscription',inject:()=>face};
+  const native={component:NativeModel,options:{name:'conversation.input.model',priority:-10},inject:()=>face};
   const fallback={component:function BuiltinModel(){},options:{name:'conversation.input.model',priority:0},locale:'conversation'};
   const hooks={},entries=[fallback,native];let injectionDispose,registered,unregistered=0,cssDispose;
   const slots={entries:()=>entries,subscribe(){return()=>{};},inject(name,fn){injectionDispose=fn();return injectionDispose;},register(options,component){registered={options,component,locale:options.locale,inject:options.inject};entries.push(registered);return()=>{unregistered++;entries.splice(entries.indexOf(registered),1);};}};
@@ -33,29 +33,23 @@ window.runModelSliderRegression=async function(){
   const menu=document.createElement('div');menu.className='codexModelSelectMenu';menu.id='synthetic-fan-menu';menu.setAttribute('role','menu');menu.style.position='fixed';
   const cells=['模型','推理强度','速度','输出详略'].map(label=>{const e=document.createElement('button');e.className='codexModelSelectCell';e.setAttribute('role','menuitem');e.innerHTML='<span class="codexModelSelectCellLabel"></span><span class="codexModelSelectCellValue">Model A</span>';e.firstChild.textContent=label;e.style.color='var(--dsw-alias-label-primary)';e.lastChild.style.color='var(--dsw-alias-label-tertiary)';menu.append(e);return e;});
   const trigger=document.createElement('button');trigger.className='codexModelSelectTrigger';trigger.setAttribute('aria-controls',menu.id);trigger.style.cssText='position:fixed;right:20px;bottom:20px;width:100px;height:30px';scene.append(trigger,menu);
-  const bridgeContext=makeContext(),panelContext=makeContext();let panel,props;
+  const modelContext=makeContext();let panel;
   const pointer=(input,type)=>input.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:17}));
   const inputValue=(input,index)=>{input.value=String(index);input.dispatchEvent(new Event('input',{bubbles:true}));};
   const range=kind=>panel.querySelector('[data-setting="'+kind+'"] input');
   try{
     testPlugin.apply({effect(fn,name){hooks[name]=fn;},inject(deps,fn){fn({slots});}});
-    check('real render-erased options order the decorator above Codex and the builtin',registered&&registered.options.priority===-11&&entries.includes(native)&&entries.includes(fallback));
+    check('the decorator sits above the shipped picker without depending on a locale tag',registered&&registered.options.priority===-11&&!('locale' in registered.options)&&entries.includes(native)&&entries.includes(fallback),registered&&registered.options);
     const injected=registered.inject('synthetic-session');
-    const bare=registered.component({...injected,t,sessionId:'synthetic-session',locked:false});
-    const bareOption=bare.props.renderSlot('conversation.input.model.label',{placement:'option',selected:true},{fallback:'Native option'});
-    const bareMenu=bare.props.renderSlot('conversation.input.model.label',{placement:'menu',selected:true},{fallback:'Native selected label'});
-    check('rc5 without a child renderer retains native option labels',bareOption==='Native option');
-    check('rc5 without a child renderer still mounts the bridge beside the native menu fallback',bareMenu.props.children[0]==='Native selected label'&&typeof bareMenu.props.children[1].type==='function');
-    const forwarded=registered.component({...injected,t,sessionId:'synthetic-session',locked:false,renderSlot:()=> 'Original native label'});
-    check('native component and all three business faces are preserved exactly',forwarded.type===NativeModel&&forwarded.props.directory===face.directory&&forwarded.props.preference===face.preference&&forwarded.props.select===face.select);
-    check('model options and unrelated label slots are passed through',forwarded.props.renderSlot('conversation.input.model.label',{placement:'option',selected:true})==='Original native label'&&forwarded.props.renderSlot('other',{})==='Original native label');
-    const labeled=forwarded.props.renderSlot('conversation.input.model.label',{placement:'menu',selected:true});
-    const bridge=labeled.props.children[1];
-    check('bridge is inside the native label React ancestry, not a second picker',labeled.props.children[0]==='Original native label'&&typeof bridge.type==='function');
-    let virtual=render(bridge.type,bridge.props,bridgeContext);const marker=document.createElement('span');marker.hidden=true;virtual.props.children[0].props.ref.current=marker;cells[0].lastChild.append(marker);commit(bridgeContext);
-    virtual=render(bridge.type,bridge.props,bridgeContext);const portal=virtual.props.children[1],panelElement=portal.child;props=panelElement.props;
-    const panelNode=render(panelElement.type,props,panelContext);panel=document.createElement('div');panel.className=panelNode.props.className;panelNode.props.ref.current=panel;menu.append(panel);commit(panelContext);
-    let stopped=false;panelNode.props.onClick({stopPropagation(){stopped=true;}});check('slider click boundary prevents accidental model drill-down',stopped);
+    const modelProps={...injected,t,sessionId:'synthetic-session',locked:false};
+    const nativeElement=render(registered.component,modelProps,modelContext);
+    check('the preserved picker, its business faces and unrelated props are forwarded unchanged',nativeElement.type===NativeModel&&nativeElement.props.directory===face.directory&&nativeElement.props.preference===face.preference&&nativeElement.props.select===face.select&&nativeElement.props.sessionId==='synthetic-session');
+    commit(modelContext);await flush();
+    panel=menu.querySelector(':scope > .fan-model-sliders');
+    check('the open menu receives exactly one compact panel beside its untouched native cells',!!panel&&menu.querySelectorAll(':scope > .fan-model-sliders').length===1&&cells.length===4&&cells.every(cell=>cell.isConnected));
+    let bubbled=false;const watch=()=>{bubbled=true;};menu.addEventListener('click',watch);
+    panel.click();menu.removeEventListener('click',watch);
+    check('slider clicks stop at the panel and never reach the model cell drill-down',!bubbled);
     cssDispose=hooks['fan-de-hai: opaque-model-select']();await flush();
     check('exactly three native range controls, with current-value feedback',panel.querySelectorAll('input[type=range]').length===3&&range('effort').getAttribute('aria-valuetext')==='高'&&range('speed').value==='0'&&range('verbosity').value==='2');
     check('only enhanced native rows are hidden; model entry remains native',cells.slice(1).every(e=>getComputedStyle(e).display==='none')&&getComputedStyle(cells[0]).display!=='none'&&menu.getAttribute('role')==='group');
@@ -154,19 +148,25 @@ window.runModelSliderRegression=async function(){
     check('host read-only preferences cannot submit',range('speed').disabled&&range('verbosity').disabled);
     ps={...ps,fastModels:undefined};publishPS();await flush();check('unknown speed capability retains its original native path',!range('speed')&&!cells[2].hasAttribute('data-fan-model-cell'));
     ps={...ps,fastModels:['model-a'],writable:true};publishPS();await flush();check('restored capabilities retain consistent setting order',[...panel.querySelectorAll('[data-setting]')].map(e=>e.dataset.setting).join(',')==='effort,speed,verbosity');
-    const incomplete=registered.component({...injected,fanFace:{available:true,directory:face.directory},t,renderSlot:()=> 'Native fallback'});check('an incompatible future controller leaves the native label path untouched',incomplete.props.renderSlot('conversation.input.model.label',{placement:'menu',selected:true})==='Native fallback');
-const lockedProps={...props,locked:true};render(panelElement.type,lockedProps,panelContext);commit(panelContext);await flush();
+    const incompleteContext=makeContext();
+    const incomplete=render(registered.component,{...modelProps,fanFace:{available:true,directory:face.directory}},incompleteContext);commit(incompleteContext);await flush();
+    check('an incompatible future controller attaches no second panel and still forwards the picker',incomplete.type===NativeModel&&menu.querySelectorAll(':scope > .fan-model-sliders').length===1);
+    cleanup(incompleteContext);
+    render(registered.component,{...modelProps,locked:true},modelContext);commit(modelContext);await flush();
+    panel=menu.querySelector(':scope > .fan-model-sliders');
     check('composer lock disables every enhanced setting',[...panel.querySelectorAll('input')].every(e=>e.disabled));
-    render(panelElement.type,props,panelContext);commit(panelContext);await flush();
+    render(registered.component,modelProps,modelContext);commit(modelContext);await flush();
+    panel=menu.querySelector(':scope > .fan-model-sliders');
+    check('unlocking restores the same single enhanced panel',[...panel.querySelectorAll('input')].every(e=>!e.disabled)&&menu.querySelectorAll(':scope > .fan-model-sliders').length===1);
     r=range('effort');pointer(r,'pointerdown');inputValue(r,0);pointer(r,'pointerup');const confirmAfterUnmount=finishSelect(true,true);await flush();
-    menu.style.left='17px';cleanup(panelContext);cleanup(bridgeContext);await flush();
+    menu.style.left='17px';cleanup(modelContext);await flush();
     confirmAfterUnmount();await flush();
     check('unmount cancels confirmation ownership and ignores a late authoritative callback',panel.childElementCount===0&&dsListeners.size===0&&psListeners.size===0);
     check('unmount releases subscriptions and restores native row metadata',dsListeners.size===0&&psListeners.size===0&&cells.every(e=>!e.hasAttribute('data-fan-model-cell'))&&cells[0].getAttribute('role')==='menuitem'&&menu.getAttribute('role')==='menu');
-    check('newer host positioning survives cleanup and native nodes are untouched',menu.style.left==='17px'&&cells.every(e=>e.isConnected)&&cells[0].lastChild.contains(marker));
+    check('newer host positioning survives cleanup and native nodes are untouched',menu.style.left==='17px'&&cells.every(e=>e.isConnected)&&!menu.querySelector(':scope > .fan-model-sliders'));
     injectionDispose();injectionDispose=null;check('plugin disposer unregisters only its wrapper',entries.length===2&&entries.includes(native)&&entries.includes(fallback)&&unregistered===1);
-    face.available=false;const disabledNative=forwarded.type;check('the preserved native component is never copied or rewritten',disabledNative===NativeModel);
+    face.available=false;check('the preserved native component is never copied or rewritten',nativeElement.type===NativeModel);
   }catch(error){check('unexpected exception',false,error.stack);}
-  finally{cleanup(panelContext);cleanup(bridgeContext);if(injectionDispose)injectionDispose();if(cssDispose)cssDispose();scene.remove();}
+  finally{cleanup(modelContext);if(injectionDispose)injectionDispose();if(cssDispose)cssDispose();scene.remove();}
   return{passed:results.filter(r=>r.pass).length,total:results.length,results};
 };

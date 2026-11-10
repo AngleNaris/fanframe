@@ -19,14 +19,14 @@
 
 ## 版本与安装
 
-当前测试版本为 `1.10.0-beta.16`，npm 包名为 `fanframe`。中文显示名为“繁界”，英文显示名为“FanFrame”。
+当前测试版本为 `1.10.0-beta.23`，npm 包名为 `fanframe`。中文显示名为“繁界”，英文显示名为“FanFrame”。
 
-在 DSH 插件管理器中添加 `fanframe@1.10.0-beta.16`，安装后启用插件。也可以使用 `fanframe@beta` 获取测试渠道版本。`latest` 标签独立维护，不代表稳定版。
+在 DSH 插件管理器中添加 `fanframe@1.10.0-beta.23`，安装后启用插件。也可以使用 `fanframe@beta` 获取测试渠道版本。`latest` 标签独立维护，不代表稳定版。
 
 ### 兼容范围
 
-- **安装兼容声明：** DSH Desktop `0.2.1-rc.1` 至 `0.2.1-rc.6`，包含两端，对应 `>=0.2.1-rc.1 <=0.2.1-rc.6`。
-- **实际验证基线：** `0.2.1-rc.3`。其他版本尚未逐一实测，不能把声明范围理解为完整的逐版验证结果。
+- **安装兼容声明：** `>=0.2.1-rc.1 <0.4.0-0`，包含 DSH Desktop `0.2.2-rc.1`。
+- **实际验证基线：** `0.2.1-rc.3` 与 `0.2.2-rc.1`；beta.23 修复新版 Codex 模型参数滑条的挂载，并已完成本机使用验证。其他版本尚未逐一实测，不能把声明范围理解为完整的逐版验证结果。
 - **宿主依赖：** 部分样式与目录功能依赖 DSH 的界面结构和兼容接口。宿主升级后可能需要适配，不保证各版本呈现完全一致。
 
 > **Desktop 0.2.1-rc.3 更新提示：** 宿主可能缓存旧的客户端注入版本。更新插件后先确认新版本是否生效；确需完整重载时，保存当前工作后正常退出并重新启动 Desktop，避免直接硬刷新页面。
@@ -65,9 +65,9 @@ FanFrame (繁界) means “Fanxing’s realm.” This plugin lightly polishes th
 
 ### Installation and compatibility
 
-Install `fanframe@1.10.0-beta.16` through the DSH Plugin Manager, or use `fanframe@beta` for the beta channel. The npm package is `fanframe`; the Chinese display name is 繁界. The `latest` tag is maintained independently and does not indicate a stable release.
+Install `fanframe@1.10.0-beta.23` through the DSH Plugin Manager, or use `fanframe@beta` for the beta channel. The npm package is `fanframe`; the Chinese display name is 繁界. The `latest` tag is maintained independently and does not indicate a stable release.
 
-The declared DSH Desktop engine range is `>=0.2.1-rc.1 <=0.2.1-rc.6`, inclusive. The actual verification baseline remains `0.2.1-rc.3`; other versions in this range have not been individually tested. Some features depend on host UI structures and compatibility interfaces, so behavior can differ between DSH versions.
+The declared DSH Desktop engine range is `>=0.2.1-rc.1 <0.4.0-0`, including `0.2.2-rc.1`. Verified baselines are `0.2.1-rc.3` and `0.2.2-rc.1`; beta.23 restores the compact model controls with the updated Codex picker and has been checked in local use. Other versions have not been individually tested. Some features depend on host UI structures and compatibility interfaces, so behavior can differ between DSH versions.
 
 Disable the legacy `fan-de-hai` package before enabling FanFrame, and keep a rollback copy until migration is verified. Never enable both packages together. On Desktop `0.2.1-rc.3`, verify that an updated client has loaded; if a full reload is needed, save your work and restart Desktop normally rather than hard-refreshing its page.
 
