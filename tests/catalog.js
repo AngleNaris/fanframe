@@ -10,14 +10,36 @@ window.runCatalogRegression=async function(){
  const style=document.createElement('style');style.dataset.plugin='@deepseek-ai/dsh-client-ui-subagent';style.textContent='.fixture_row{}.fixture_label{}.fixture_summary{}';document.head.append(style);
  const menu=document.createElement('div');menu.setAttribute('role','tree');menu.setAttribute('aria-label','子智能体会话');menu.innerHTML='<div role="treeitem" class="fixture_row"><span class="fixture_label">Unique</span><span class="fixture_summary" title="original title">Original summary</span></div>';document.body.append(menu);
  const summary=menu.querySelector('.fixture_summary');let response=null,calls=0,pendingResolve;
- const effects={};plugin.apply({effect(fn,name){effects[name]=fn;},sessions:{list:{getSnapshot:()=>({projectionsBySession:{parent:{values:{subagentCatalog:[{id:'child',label:'Unique'}]}}}})}},connection:{rpc:{call:()=>{calls++;return pendingResolve==='defer'?new Promise(resolve=>pendingResolve=resolve):Promise.resolve(response);}}}});
- let dispose;
+ let snapshot={projectionsBySession:{parent:{values:{subagentCatalog:[{id:'child',label:'Unique'}]}}}};
+ const effects={};plugin.apply({effect(fn,name){effects[name]=fn;},sessions:{list:{getSnapshot:()=>snapshot}},connection:{rpc:{call:()=>{calls++;return pendingResolve==='defer'?new Promise(resolve=>pendingResolve=resolve):Promise.resolve(response);}}}});
+ let dispose,nativeStyle,nativeMenu;
  try{
   dispose=effects['fan-de-hai: subagent-model-instead-of-summary']();await drain();check('model miss keeps original',summary.textContent==='Original summary',summary.textContent);
   response={ok:true,value:{found:true,provider:'provider',model:'first'}};await tick();check('miss retries after bounded TTL',summary.textContent==='provider/first',{calls,text:summary.textContent});
   response={ok:true,value:{found:true,provider:'provider',model:'second'}};await tick();check('model cache refreshes switch',summary.textContent==='provider/second',summary.textContent);
   dispose();dispose=null;check('catalog unload restores text and title',summary.textContent==='Original summary'&&summary.title==='original title',{text:summary.textContent,title:summary.title});check('catalog unload removes timers and frames',!timers.size&&!frames.size,{timers:timers.size,frames:frames.size});
   pendingResolve='defer';dispose=effects['fan-de-hai: subagent-model-instead-of-summary']();await drain();dispose();dispose=null;pendingResolve(response);await drain();check('late RPC does not paint after unload',summary.textContent==='Original summary',summary.textContent);
- }catch(e){check('unexpected exception',false,e.stack);}finally{if(dispose)dispose();menu.remove();style.remove();window.requestAnimationFrame=orig.raf;window.cancelAnimationFrame=orig.caf;window.setTimeout=orig.st;window.clearTimeout=orig.ct;Date.now=orig.now;}
+  pendingResolve=null;response={ok:true,value:{found:true,provider:'provider',model:'rc3'}};
+  nativeStyle=document.createElement('style');nativeStyle.dataset.pluginCss='@deepseek-ai/dsh-client-ui-subagent/SubagentHeaderLineage.module.css';nativeStyle.textContent='.modern_row{}.modern_label{}.modern_content{}.modern_secondaryLabel{}.modern_metrics{}';document.head.append(nativeStyle);
+  nativeMenu=document.createElement('div');nativeMenu.setAttribute('role','tree');nativeMenu.setAttribute('aria-label','子智能体会话');nativeMenu.innerHTML='<div role="treeitem" class="modern_row" aria-label="native identity"><span class="modern_content"><span class="modern_label">Unique</span><span class="modern_secondaryLabel" title="native title">agent-1</span></span><span class="modern_metrics">15k · 30s</span></div>';document.body.append(nativeMenu);
+  const nativeRow=nativeMenu.querySelector('[role=treeitem]'),nativeSecondary=nativeMenu.querySelector('.modern_secondaryLabel');
+  dispose=effects['fan-de-hai: subagent-model-instead-of-summary']();await drain();
+  check('rc.3 model information preserves the native secondary name and metrics',nativeSecondary.textContent==='agent-1 · provider/rc3'&&nativeMenu.querySelector('.modern_metrics').textContent==='15k · 30s'&&nativeRow.getAttribute('aria-label')==='native identity',nativeSecondary.textContent);
+  nativeSecondary.append(document.createTextNode(' active'));await drain();
+  check('native updates do not duplicate the owned model text',nativeSecondary.textContent.split('provider/rc3').length===2);
+  dispose();dispose=null;check('rc.3 unload preserves native updates and title',nativeSecondary.textContent==='agent-1 active'&&nativeSecondary.title==='native title');
+  snapshot={byId:{child:{}},projectionsBySession:{parent:{values:{subagentCatalog:[{id:'child',mode:'continuable',name:'agent-no-label',label:''}]}}}};
+  nativeMenu.querySelector('.modern_label').textContent='agent-no-label';nativeSecondary.remove();dispose=effects['fan-de-hai: subagent-model-instead-of-summary']();await drain();
+  check('rc.3 creates a secondary line for a real name-only entry',nativeMenu.querySelector('[data-fan-model-owned]')?.textContent==='provider/rc3');
+  dispose();dispose=null;check('rc.3 unload removes its owned secondary line',!nativeMenu.querySelector('[data-fan-model-owned]'));
+  snapshot={byId:{a:{title:'Build'}},projectionsBySession:{parent:{values:{subagentCatalog:[{id:'a',label:''},{id:'b',label:'Build'}]}}}};
+  nativeMenu.querySelector('.modern_label').textContent='Build';const callsBefore=calls;dispose=effects['fan-de-hai: subagent-model-instead-of-summary']();await drain();
+  check('duplicate visible title from label and summary fails closed',!nativeMenu.querySelector('[data-fan-model-owned]')&&calls===callsBefore);
+  dispose();dispose=null;
+  snapshot={projectionsBySession:{parent:{values:{subagentCatalog:[{id:'other',label:'constructor'},{id:'child',label:'Unique'}]}}}};
+  nativeMenu.querySelector('.modern_label').textContent='Unique';dispose=effects['fan-de-hai: subagent-model-instead-of-summary']();await drain();
+  check('special label names do not block subsequent identity lookups',nativeMenu.querySelector('[data-fan-model-owned]')?.textContent==='provider/rc3');
+  dispose();dispose=null;
+ }catch(e){check('unexpected exception',false,e.stack);}finally{if(dispose)dispose();menu.remove();style.remove();if(nativeMenu)nativeMenu.remove();if(nativeStyle)nativeStyle.remove();window.requestAnimationFrame=orig.raf;window.cancelAnimationFrame=orig.caf;window.setTimeout=orig.st;window.clearTimeout=orig.ct;Date.now=orig.now;}
  return {passed:results.filter(r=>r.pass).length,total:results.length,results};
 };

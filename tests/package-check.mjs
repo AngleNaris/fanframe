@@ -10,11 +10,11 @@ const pkg = JSON.parse(read('package.json'));
 const checks = [];
 function check(name, fn) { fn(); checks.push(name); }
 
-check('package identity and beta publication channel', () => {
+check('package identity and latest publication channel', () => {
   assert.equal(pkg.name, 'fanframe');
-  assert.equal(pkg.version, '1.10.0-beta.23');
+  assert.equal(pkg.version, '1.10.0');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
-  assert.equal(pkg.publishConfig.tag, 'beta');
+  assert.equal(pkg.publishConfig.tag, 'latest');
   assert.equal(pkg.publishConfig.access, 'public');
   assert.equal(pkg.license, 'MIT');
 });
