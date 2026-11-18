@@ -1,0 +1,53 @@
+<style>
+.coffee { display:grid; gap:10px; }
+.coffee-controls,.coffee-field,.coffee-time,.coffee-reading { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.coffee-controls { gap:6px 14px; font-size:13px; }
+.coffee-time input { inline-size:7rem; }
+.coffee-controls output { min-inline-size:3.5em; font-variant-numeric:tabular-nums; }
+.coffee-reading { justify-content:space-between; }
+.coffee-meta { color:var(--fanframe-viz-muted); font-size:13px; }
+.coffee-current { font-size:clamp(22px,4.4vw,30px); line-height:1.15; font-weight:650; font-variant-numeric:tabular-nums; color:var(--fanframe-viz-highlight,var(--fanframe-viz-foreground)); }
+.coffee-chart { width:100%; height:auto; display:block; overflow:visible; }
+.coffee-grid { stroke:var(--fanframe-viz-border); }
+.coffee-axis { fill:var(--fanframe-viz-muted); font-size:13px; font-variant-numeric:tabular-nums; }
+.coffee-curve { stroke:var(--fanframe-viz-foreground); fill:none; }
+.coffee-point { fill:var(--fanframe-viz-highlight,var(--fanframe-viz-foreground)); }
+.coffee-room { stroke:var(--fanframe-viz-muted); }
+</style>
+<section class="coffee" aria-label="咖啡降温模拟">
+  <div class="coffee-controls">
+    <div class="coffee-field"><label for="cup">容器</label><select id="cup"><option value=".04">敞口杯</option><option value=".014">保温杯</option><option value=".025">有盖杯</option></select></div>
+    <div class="coffee-time"><label for="time">放置时间</label><input id="time" type="range" min="0" max="60" value="20" aria-valuetext="20 分钟"><output id="minutes" for="time">20 分钟</output></div>
+    <label><input id="reference" type="checkbox" checked>显示室温参考</label>
+    <button id="reset" type="button" data-fan-viz-variant="quiet">重置</button>
+  </div>
+  <div class="coffee-reading"><span class="coffee-meta">温度（°C） · 模拟数据</span><output id="temp" class="coffee-current" for="time cup" aria-label="当前温度">48°C</output></div>
+  <svg class="coffee-chart" viewBox="0 0 620 176" role="img" aria-label="咖啡温度随时间下降的模拟曲线，范围 0 到 60 分钟">
+    <path class="coffee-grid" d="M34 8H609 M34 52H609 M34 96H609 M34 140H609" fill="none"/>
+    <g class="coffee-axis" text-anchor="end"><text x="27" y="13">80</text><text x="27" y="57">60</text><text x="27" y="101">40</text></g>
+    <g id="room"><path class="coffee-room" opacity=".55" stroke-dasharray="4 4" d="M34 135.6H609"/><text class="coffee-axis" x="27" y="140" text-anchor="end">22</text></g>
+    <path id="marker" class="coffee-room" opacity=".45" stroke-dasharray="3 3"/>
+    <path id="curve" class="coffee-curve" stroke-width="1.7" vector-effect="non-scaling-stroke"/><circle id="dot" class="coffee-point" r="4"/>
+    <g class="coffee-axis"><text x="34" y="161">0</text><text x="225.7" y="161" text-anchor="middle">20</text><text x="417.3" y="161" text-anchor="middle">40</text><text x="609" y="161" text-anchor="end">60 分钟</text></g>
+  </svg>
+</section>
+<script>
+const by = id => document.getElementById(id);
+const cup = by('cup'), time = by('time'), reference = by('reference');
+const x = m => 34 + m * 575 / 60, y = c => 8 + (80 - c) * 2.2;
+function draw() {
+  const n = Number(time.value), k = Number(cup.value);
+  const temperature = m => 22 + 58 * Math.exp(-k * m);
+  by('minutes').value = n + ' 分钟';
+  time.setAttribute('aria-valuetext', by('minutes').value);
+  by('temp').value = Math.round(temperature(n)) + '°C';
+  by('curve').setAttribute('d', Array.from({ length:61 }, (_, m) => (m ? 'L' : 'M') + x(m).toFixed(2) + ' ' + y(temperature(m)).toFixed(2)).join(' '));
+  by('marker').setAttribute('d', 'M' + x(n) + ' ' + y(temperature(n)) + 'V140');
+  by('dot').setAttribute('cx', x(n));
+  by('dot').setAttribute('cy', y(temperature(n)));
+  by('room').style.display = reference.checked ? '' : 'none';
+}
+time.oninput = cup.onchange = reference.onchange = draw;
+by('reset').onclick = () => { time.value = '20'; cup.selectedIndex = 0; reference.checked = true; draw(); };
+draw();
+</script>

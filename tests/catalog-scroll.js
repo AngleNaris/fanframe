@@ -25,6 +25,10 @@ window.runCatalogScrollRegression=async function(){
   check('user navigation before first paint cancels the default',intent.tree.scrollTop===0);
   const keyboard=make();document.body.append(keyboard.panel);keyboard.tree.querySelector('button').focus();await flush();
   check('native keyboard opening retains its visible focused row',keyboard.tree.contains(document.activeElement)&&keyboard.tree.scrollTop===0);
+  const modern=make(false);const body=modern.tree;body.removeAttribute('role');body.removeAttribute('aria-label');const inner=document.createElement('div');inner.setAttribute('role','tree');inner.setAttribute('aria-label','localized catalog label');body.append(inner);rows(inner);document.body.append(modern.panel);await flush();
+  check('rc.3 nested tree scrolls its actual menuBody rather than the inner tree',bottom(body)&&body.scrollTop>0&&inner.scrollTop===0,{body:body.scrollTop,tree:inner.scrollTop});
+  body.scrollTop=0;inner.firstElementChild.append(document.createTextNode('model refreshed'));await flush();
+  check('rc.3 later updates never override user scrolling',body.scrollTop===0);
   const unknown=make();unknown.tree.className='unknown_body';document.body.append(unknown.panel);await flush();
   check('unrecognized tree contracts remain unchanged',unknown.tree.scrollTop===0);
   const canceled=make();document.body.append(canceled.panel);await Promise.resolve();dispose();dispose=null;await flush();

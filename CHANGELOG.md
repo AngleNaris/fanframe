@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.11.0-beta.9 — 2026-11-18 (GitHub prerelease)
+
+- Show `fanframe_visualize` cards directly in chat replies. Prefer graphics over redundant text, and use amber and mist blue for data series and teal for the active reading.
+- Provide 15 in-document SVG icons and themed native controls. Cards that do not reference the icons have no added SVG library. Preserve historical HTML and prevent the card's outer border from brightening on hover.
+- Color numbers and paired brackets in assistant prose without changing the text. Give remaining clauses stable brightness variation based on punctuation, and release the paint ranges when the block leaves the viewport.
+- Refine sidebar spacing, the unpin menu, and Codex model picker compatibility. Retain native control handlers.
+- Pass 213 engineering checks. On DSH Desktop `0.2.2-rc.3`, the dark Web client replays the original weather card and renders a new chart with series colors and weather icons. Point fade-out on leave was not confirmed. Light-theme behavior and long-stream performance were not tested in this release.
+
 ## 1.10.0-beta.23 — 2026-11-10 (prerelease)
 
 - Restore the compact model controls on DSH 0.2.2-rc.1: the shipped Codex picker stopped declaring a locale tag and stopped rendering the optional model-label child slot, so the previous registration gate and mount point both went unused and the controls silently disappeared.

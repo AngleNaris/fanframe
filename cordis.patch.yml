@@ -1,4 +1,4 @@
-# 繁界（FanFrame）：纯客户端界面增强。
+# 繁界（FanFrame）：界面增强与独立可视化工具。
 # 从旧包迁移时，先禁用 fan-de-hai，禁止新旧插件同时生效。
 - insert:
     - id: fanframe

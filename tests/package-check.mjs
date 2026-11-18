@@ -12,7 +12,7 @@ function check(name, fn) { fn(); checks.push(name); }
 
 check('package identity and beta publication channel', () => {
   assert.equal(pkg.name, 'fanframe');
-  assert.equal(pkg.version, '1.10.0-beta.23');
+  assert.equal(pkg.version, '1.11.0-beta.9');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
   assert.equal(pkg.publishConfig.tag, 'beta');
   assert.equal(pkg.publishConfig.access, 'public');
@@ -59,13 +59,20 @@ check('Client module resolves under fanframe without runtime imports', () => {
   assert.equal(typeof plugin.apply, 'function');
   const effects = [];
   plugin.apply({ effect(fn, name) { assert.equal(typeof fn, 'function'); effects.push(name); } });
-  assert.equal(effects.length, 14);
+  assert.equal(effects.length, 15);
   assert.equal(new Set(effects).size, effects.length);
 });
 const host = await import(pathToFileURL(path.join(root, 'lib/index.js')).href);
-check('Host remains a dependency-free no-op', () => {
+check('Host registers only the independent visualization tool through an injected registry', () => {
   assert.deepEqual(host.inject, []);
-  assert.equal(host.apply(), undefined);
+  const definitions = [];
+  host.apply({ inject(keys, setup) {
+    assert.deepEqual(keys, ['tools']);
+    setup({ tools: { register(definition) { definitions.push(definition); } }, inject() {} });
+  } });
+  assert.equal(definitions.length, 1);
+  assert.equal(definitions[0].name, 'fanframe_visualize');
+  assert.deepEqual(definitions[0].parameters.required, ['title', 'html']);
 });
 const baseline = process.argv[2];
 if (baseline) check('Client body differs only by module id and diagnostic version', () => {

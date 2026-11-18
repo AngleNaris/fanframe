@@ -16,9 +16,9 @@ window.runSidebarRailRegression=async function(){
  const icon='<svg aria-hidden="true" width="16" height="16"><path d="M2 2h12v12H2z"/></svg>';
  const slot=(name,body)=>'<div data-slot="'+name+'" style="display:contents">'+body+'</div>';
  let calls=0,selected=null,dispose,cssDispose,hostCollapsed=false;
- const frame=document.createElement('div');frame.className=layout('frame');frame.style.cssText='width:100%;height:520px;grid-template-columns:280px minmax(0px,1fr) minmax(0px,0px);--ds-ease-in-out:linear;--ds-transition-duration-slow:200ms';
+ const frame=document.createElement('div');frame.className=layout('frame');frame.style.cssText='width:100%;height:520px;grid-template-columns:280px minmax(0px,1fr) minmax(0px,0px);--ds-ease-in-out:linear;--ds-transition-duration-slow:200ms;--dsw-alias-brand-primary:#8bb8ed';
  // Exact preload caption contract; never opens the real Electron application menu.
- const caption=document.createElement('div');caption.dataset.windowsMenu='';const shadow=caption.attachShadow({mode:'open'});
+ const caption=document.createElement('div');caption.dataset.windowsMenu='';caption.style.setProperty('--dsw-alias-brand-primary','#8bb8ed');const shadow=caption.attachShadow({mode:'open'});
  shadow.innerHTML='<style>:host{position:fixed;top:0;left:var(--dsh-windows-menu-start,48px);height:var(--dsh-windows-titlebar-height);display:flex;align-items:center}[role=menubar]{display:flex;gap:2px}button{height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:14px}button:focus-visible{outline:2px solid blue;outline-offset:-2px}</style><div role="menubar"><button type="button" role="menuitem" aria-haspopup="menu">应用</button><button type="button" role="menuitem" aria-haspopup="menu" tabindex="-1">编辑</button></div>';
  const captionButton=shadow.querySelector('button'),menuLeft=()=>rect(captionButton).left;
  const settleResize=()=>new Promise(resolve=>{let finished=false;const done=()=>{if(!finished){finished=true;clearTimeout(timer);resolve();}};const timer=setTimeout(done,1500);requestAnimationFrame(()=>requestAnimationFrame(done));});
@@ -64,11 +64,18 @@ window.runSidebarRailRegression=async function(){
   check('inline MCP popup controls are never mistaken for rail buttons',!foot.querySelector('[data-cordis-panel] button').hasAttribute('data-fan-rail-button'));
   const button=navButtons[0];button.click();await flush();check('original click and selection run exactly once',calls===1&&selected==='plugins',{calls,selected});
   check('no original button changes DOM parent',Array.from(originalParent).every(([b,p])=>b.parentNode===p));
-  button.focus();await flush();check('keyboard focus is visible without outline or ring',getComputedStyle(button).outlineStyle==='none'&&getComputedStyle(button,'::after').height==='2px'&&getComputedStyle(button).boxShadow==='none',{outline:getComputedStyle(button).outlineStyle,cue:getComputedStyle(button,'::after').height,shadow:getComputedStyle(button).boxShadow});
+  // A synthetic rc.3 accessory guard, not a replacement for the rc.3 layout fixture.
+  const sidebarStyle=sheets.find(sheet=>sheet.dataset.pluginCss.endsWith('/SidebarRoot.module.css')),originalSidebarCSS=sidebarStyle.textContent;
+  sidebarStyle.textContent+='\n.fixture_panelUnpin{width:18px;min-width:18px;height:18px;padding:0}';
+  const unpin=document.createElement('button');unpin.className='fixture_panelUnpin';unpin.setAttribute('aria-label','取消固定');let unpins=0;unpin.onclick=()=>unpins++;nav.append(unpin);await flush();
+  check('native unpin accessory is not enlarged or retitled as a rail button',!unpin.hasAttribute('data-fan-rail-button')&&!unpin.hasAttribute('title')&&Math.abs(rect(unpin).width-18)<.1,rect(unpin));
+  unpin.click();check('unpin accessory keeps its original parent and handler',unpin.parentNode===nav&&unpins===1);
+  unpin.remove();sidebarStyle.textContent=originalSidebarCSS;await flush();
+  button.focus();await flush();button.getAnimations().filter(a=>a.transitionProperty==='color').forEach(a=>a.finish());check('keyboard focus uses existing icon color without outline, ring or added bar',getComputedStyle(button).outlineStyle==='none'&&getComputedStyle(button,'::after').content==='none'&&getComputedStyle(button).boxShadow==='none'&&getComputedStyle(button).textDecorationLine==='none'&&getComputedStyle(button).color==='rgb(139, 184, 237)',{outline:getComputedStyle(button).outlineStyle,color:getComputedStyle(button).color,shadow:getComputedStyle(button).boxShadow});
   document.body.append(caption);await flush();
   check('list background and new-session leading edges align to menu hover box',Math.abs(rect(selectedRow).left-menuLeft())<.1&&Math.abs(rect(newSession).left-menuLeft())<.1,{row:rect(selectedRow),newSession:rect(newSession),caption:menuLeft()});
   check('list has no hidden extra native left padding',getComputedStyle(region).paddingLeft==='0px',getComputedStyle(region).paddingLeft);
-  captionButton.focus();check('caption shadow keeps square no-ring keyboard cue',getComputedStyle(captionButton).outlineStyle==='none'&&getComputedStyle(captionButton).borderRadius==='0px'&&getComputedStyle(captionButton).textDecorationLine.includes('underline'));
+  captionButton.focus();check('caption shadow uses square color-only focus feedback',getComputedStyle(captionButton).outlineStyle==='none'&&getComputedStyle(captionButton).borderRadius==='0px'&&getComputedStyle(captionButton).textDecorationLine==='none'&&getComputedStyle(captionButton).color==='rgb(139, 184, 237)');
   const fixedBeforeCaption=Array.from(root.querySelectorAll('[data-fan-rail-button]')).map(rect);
   captionButton.style.paddingLeft='14px';await settleResize();await flush();
   check('caption text padding cannot shift hover-box-aligned list',Math.abs(rect(selectedRow).left-menuLeft())<.1&&Math.abs(parseFloat(root.style.getPropertyValue('--fan-rail-list-inset'))+4)<.1,{inset:root.style.getPropertyValue('--fan-rail-list-inset'),row:rect(selectedRow),caption:menuLeft()});
@@ -140,6 +147,8 @@ window.runSidebarRailRegression=async function(){
   // Change only the outer layout; retain the native sidebar nodes and actions.
   const drawerSheet=document.createElement('style');drawerSheet.textContent='[data-fixture-pocket-shell]{position:relative!important;grid-template-columns:100% 0 0!important}[data-fixture-pocket-shell]>:first-child{position:absolute;left:0;top:0;height:100%;width:max-content;max-width:92%;z-index:1200;transform:translateX(-110%)}[data-fixture-pocket-shell]:not([data-sidebar-collapsed])>:first-child{transform:none}[data-fixture-pocket-shell]>main{grid-column:1!important}';sheets.push(drawerSheet);document.head.append(drawerSheet);
   const originalWidth=frame.style.width;frame.style.width='372px';frame.setAttribute('data-fixture-pocket-shell','');caption.remove();mcpPanel.style.display='none';
+  // Native 0.2.2 mobile sidebars are themselves dialogs, not nested popups.
+  root.setAttribute('role','dialog');root.setAttribute('data-shortcut-modal','sidebar');
   collapsed(true);dispose=effects['fan-de-hai: sidebar-rail']();await flush();
   frame.setAttribute('data-mobile-nav','frame');await flush();
   check('late Pocket mode keeps closed drawer native without a permanent rail',!root.hasAttribute('data-fan-sidebar-rail')&&!frame.hasAttribute('data-fan-rail-frame')&&!frame.style.getPropertyValue('--fan-rail-host-tail'));
@@ -150,6 +159,12 @@ window.runSidebarRailRegression=async function(){
   check('drawer keeps the icon column beside a usable session list',paintNear(rect(nav).width,52)&&rect(region).width>150&&getComputedStyle(region).display!=='none',{nav:rect(nav),list:rect(region)});
   const drawerButtons=()=>Array.from(root.querySelectorAll('[data-fan-rail-button]'));
   check('drawer controls retain labels and 44px touch targets',drawerButtons().length===5&&drawerButtons().every(b=>rect(b).width>=44&&rect(b).height>=44&&b.title),drawerButtons().map(rect));
+  check('native dialog sidebar still compacts its own navigation labels',navButtons.every(b=>b.hasAttribute('data-fan-rail-button')&&b.querySelector('.'+side('panelTitle')).hasAttribute('data-fan-rail-label')));
+  for(const popupRole of ['dialog','menu','listbox']){
+   const popup=document.createElement('div');popup.setAttribute('role',popupRole);popup.innerHTML=panel('nested-popup','弹窗内部');nav.append(popup);await flush();
+   check('native dialog sidebar leaves nested '+popupRole+' controls untouched',!popup.querySelector('button').hasAttribute('data-fan-rail-button')&&!popup.querySelector('.'+side('panelTitle')).hasAttribute('data-fan-rail-label'));
+   popup.remove();await flush();
+  }
   // Pocket's real footer identity; do not infer it from locale or disabled state.
   const mobileActions=document.createElement('div');mobileActions.dataset.mobileNav='drawer-actions';mobileActions.style.cssText='display:inline-flex;align-items:center;gap:8px';
   const sessionLog=document.createElement('button');sessionLog.dataset.mobileNav='session-log';sessionLog.setAttribute('aria-label','导出会话日志');sessionLog.title='导出会话日志';sessionLog.disabled=true;sessionLog.innerHTML=icon+'<span>导出会话日志</span>';
@@ -190,12 +205,17 @@ window.runSidebarRailRegression=async function(){
   for(let i=0;i<8;i++){collapsed(false);await flush();collapsed(true);await flush();}collapsed(false);await flush();
   check('reopening recovers the same body-portal menu above Pocket',Number(getComputedStyle(pocketMenu).zIndex)>1200&&pocketMenu.parentNode===document.body,pocketMenu.style.cssText);
   check('rapid Pocket open/close restores one set of original controls',drawerButtons().length===5&&Array.from(originalParent).every(([b,p])=>b.parentNode===p));
+  frame.setAttribute('data-sidebar-drawer','');await flush();frame.removeAttribute('data-mobile-nav');await flush();
+  check('native drawer marker alone keeps the rail in drawer mode',root.hasAttribute('data-fan-rail-drawer')&&!frame.hasAttribute('data-fan-rail-frame')&&!frame.style.getPropertyValue('--fan-rail-host-tail'));
+  collapsed(true);await flush();check('native drawer close releases controls without a desktop strip',!root.hasAttribute('data-fan-sidebar-rail')&&!frame.hasAttribute('data-fan-rail-frame')&&paintNear(rect(main).width,372));
+  collapsed(false);await flush();check('native drawer reopen restores dialog labels and 44px controls',root.hasAttribute('data-fan-rail-drawer')&&drawerButtons().length===5&&drawerButtons().every(b=>rect(b).width===44&&rect(b).height===44)&&navButtons.every(b=>b.querySelector('.'+side('panelTitle')).hasAttribute('data-fan-rail-label')));
+  frame.removeAttribute('data-sidebar-drawer');await flush();
   frame.removeAttribute('data-mobile-nav');await flush();check('ordinary browser shell returns to the desktop rail after Pocket mode',root.hasAttribute('data-fan-sidebar-rail')&&!root.hasAttribute('data-fan-rail-drawer')&&frame.hasAttribute('data-fan-rail-frame'));
   check('ending mobile mode restores the native portal layer',pocketMenu.style.zIndex==='1100'&&!pocketMenu.style.getPropertyPriority('z-index'));
   frame.setAttribute('data-mobile-nav','frame');await flush();check('late Pocket mode remounts without another effect registration',root.hasAttribute('data-fan-rail-drawer'));
   check('a late drawer marker updates an already-mounted native menu',Number(getComputedStyle(pocketMenu).zIndex)>1200,pocketMenu.style.cssText);
   pocketPopupDispose();pocketPopupDispose=null;await flush();check('popup unload returns native layer and marker without moving the menu',pocketMenu.style.zIndex==='1100'&&!pocketMenu.hasAttribute('data-fan-footer-panel')&&pocketMenu.parentNode===document.body);pocketMenu.remove();pocketMenu=null;
-  dispose();dispose=null;await flush();frame.removeAttribute('data-mobile-nav');frame.removeAttribute('data-fixture-pocket-shell');drawerSheet.remove();frame.style.width=originalWidth;
+  dispose();dispose=null;await flush();frame.removeAttribute('data-mobile-nav');frame.removeAttribute('data-fixture-pocket-shell');drawerSheet.remove();frame.style.width=originalWidth;root.removeAttribute('role');root.removeAttribute('data-shortcut-modal');
   check('drawer unload restores native ownership without stale private state',!root.hasAttribute('data-fan-rail-drawer')&&!root.hasAttribute('data-fan-sidebar-rail')&&!frame.style.getPropertyValue('--fan-rail-host-tail')&&Array.from(originalParent).every(([b,p])=>b.parentNode===p));
   html.setAttribute('data-windows-titlebar','');dispose=effects['fan-de-hai: sidebar-rail']();await flush();check('desktop returns to original 36px controls and frame adapter',root.hasAttribute('data-fan-sidebar-rail')&&!root.hasAttribute('data-fan-rail-drawer')&&frame.hasAttribute('data-fan-rail-frame')&&rect(button).width===36);dispose();dispose=null;
   html.setAttribute('data-windows-titlebar','');frame.style.gridTemplateColumns='auto 1fr';dispose=effects['fan-de-hai: sidebar-rail']();await flush();check('unknown frame contracts fail closed with no partial adapter',!root.hasAttribute('data-fan-sidebar-rail')&&!frame.hasAttribute('data-fan-rail-frame'),frame.style.cssText);

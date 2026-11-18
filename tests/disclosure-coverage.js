@@ -60,6 +60,29 @@ window.runDisclosureCoverageRegression = async function () {
       if (a) { a.finish(); await flush(); }
       check(kind + ' restores intrinsic height and styles', Math.abs(f.root.getBoundingClientRect().height - closed) < 0.5 && !f.root.style.height && !f.shell.style.height, {height: f.root.getBoundingClientRect().height, style: f.root.style.cssText});
     }
+    const questionFrame = document.createElement('div'); questionFrame.dataset.questionKey = 'input-fixture';
+    questionFrame.style.cssText = 'display:flex;flex-direction:column;max-height:180px;overflow:auto';
+    questionFrame.innerHTML = '<section style="display:flex;flex-direction:column;box-sizing:border-box;max-height:160px;min-height:0"><header style="height:24px;flex:none"><button aria-expanded="true">Question</button></header><div style="height:100px;flex:none"><textarea></textarea><span></span></div></section>';
+    flow.append(questionFrame); roots.push(questionFrame);
+    const question = questionFrame.firstElementChild, questionHeader = question.querySelector('button'), questionBody = question.lastElementChild;
+    const field = questionBody.querySelector('textarea'), echo = questionBody.querySelector('span'); let questionClicks = 0;
+    field.oninput = () => { echo.textContent = field.value; };
+    questionHeader.onclick = () => { questionClicks++; const open = questionHeader.getAttribute('aria-expanded') !== 'true'; questionHeader.setAttribute('aria-expanded', String(open)); if (open) question.append(questionBody); else questionBody.remove(); };
+    await flush();
+    let questionStyleWrites = 0;
+    const styleWrites = new MutationObserver(records => { questionStyleWrites += records.length; });
+    styleWrites.observe(question, {attributes:true,attributeFilter:['style']}); styleWrites.observe(questionFrame, {attributes:true,attributeFilter:['style']});
+    try {
+      field.value = 'native edit'; field.dispatchEvent(new InputEvent('input', {bubbles:true})); await flush();
+      check('idle question input keeps its text and skips root/parent style locks', echo.textContent === field.value && questionStyleWrites === 0 && question.getAnimations().length === 0, {writes:questionStyleWrites,animations:question.getAnimations().length});
+      questionBody.style.height = '130px'; echo.append(document.createTextNode(' option content')); await flush();
+      check('idle question option growth uses native immediate height', Math.abs(question.getBoundingClientRect().height - 154) < 0.5 && questionStyleWrites === 0 && question.getAnimations().length === 0, {height:question.getBoundingClientRect().height,writes:questionStyleWrites});
+      questionBody.style.height = '260px'; echo.append(document.createTextNode(' capped content')); await flush();
+      check('idle question edits preserve native max-height constraints without extra locks', Math.abs(question.getBoundingClientRect().height - 160) < 0.5 && questionStyleWrites === 0, {height:question.getBoundingClientRect().height,writes:questionStyleWrites});
+    } finally { styleWrites.disconnect(); }
+    questionHeader.click(); await flush(); let questionMotion = heightMotion({root:question,shell:question});
+    check('real question collapse still receives its original click and height motion', questionClicks === 1 && !questionBody.isConnected && !!questionMotion, {clicks:questionClicks,animation:!!questionMotion});
+    if (questionMotion) { questionMotion.finish(); await flush(); }
     const stale = fixture('read'); await flush();
     // The header reflows and is clicked in one task, before ResizeObserver runs.
     stale.header.style.height = '48px'; const liveStart = stale.root.getBoundingClientRect().height;

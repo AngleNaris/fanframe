@@ -1,0 +1,30 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>FanFrame reading · isolated regression</title>
+<style>
+body{--dsw-alias-bg-base:#171719;--dsw-alias-label-primary:#eeedf0;--dsw-alias-label-secondary:#b5b5bf;--dsw-alias-border-l1:#3f4046;margin:32px auto;padding:0 24px;max-width:730px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font:16px/1.85 'Microsoft YaHei',sans-serif}body:not([data-ds-dark-theme]){--dsw-alias-bg-base:#f8f7f4;--dsw-alias-label-primary:#22222a;--dsw-alias-label-secondary:#555566;--dsw-alias-border-l1:#d6d3cf}h1{font-size:20px;font-weight:600}p{margin:12px 0}a{color:#7aaaff}code{color:#cda74d}strong{color:#c3aee0}main{height:62vh;min-height:450px;overflow:auto;scrollbar-width:thin}.gap{height:70vh}button{color:inherit;background:none;border:1px solid var(--dsw-alias-border-l1);padding:2px 8px;font:inherit}figure{margin:0}iframe{vertical-align:top}
+</style>
+<body data-ds-dark-theme=""><h1>繁界 · 图卡与正文测试夹具</h1><button id="theme" type="button">切换深浅色</button>
+<main data-chat-flow><article data-chat-flow-kind="assistant-step">
+<p id="probe">福州今天小雨，明天降温；如果周末出门，周六会更合适。那天最低 <strong>10℃</strong>（早晚偏凉［注意保暖］），下午最暖，傍晚温差比较明显。下周一还会下雨（参考<a href="#source">第 23 日预报</a>）；<code>范围 12（保留代码颜色）</code>。正文可以照常选中和复制。</p>
+<div id="card"></div><div class="gap"></div><p id="offscreen">视口外文字 521（滚入后才染色），用来检测实际滚动。</p><span id="source"></span>
+</article></main>
+<script>let plugin;window.__ModuleLoader__={load(spec){plugin=spec.factory(name=>{if(name!=='react')throw Error(name);return {useRef:()=>({}),useId:()=>':fixture:',useState:()=>[200,()=>{}],useMemo:fn=>fn(),useEffect(){},useSyncExternalStore:(_,read)=>read(),createElement:(type,props,...children)=>({type,props,children})}})}};</script>
+<script src="../lib/client.js"></script>
+<script>
+const fixture={tint:null,views:{}};let stop;
+plugin.apply({effect(fn,name){if(name==='fanframe: prose-paint') stop=fn()},inject(_,setup){setup({locale:{register(){},bind:()=>x=>x,subscribe(){},getSnapshot:()=> 'zh'},on(){},theme:{getTheme:()=>({active:{colorScheme:document.body.hasAttribute('data-ds-dark-theme')?'dark':'light'}})},uiConversation:{events:{register(){return ()=>{}}}},slots:{inject:(_,add)=>add(),register({key},view){fixture.views[key]=view;return ()=>{}}}})}});
+function draw(){
+ const highs=[24,20,20,20,20,22,20],lows=[16,13,11,10,11,15,11],icons=['rain','cloud','cloud-sun','sun','cloud-sun','storm','rain'];
+ const weather=['小雨','阴转多云','多云转晴','晴','晴转阴','雷阵雨转小雨','小雨转多云'];
+ const x=i=>44+i*92,y=t=>25+(25-t)*6;
+ const path=v=>v.map((t,i)=>x(i)+','+y(t)).join(' ');
+ const html=`<style>:root{--hot:var(--fanframe-viz-series-1,#ddbc86);--cool:var(--fanframe-viz-series-2,#9cb8dc)}.plot{width:100%;height:auto;display:block}.high{color:var(--hot)}.low{color:var(--cool)}.day{color:var(--fanframe-viz-muted);transition:color .16s}.day:hover{color:var(--fanframe-viz-highlight)}.day .pin{opacity:0;transition:opacity .16s}.day:hover .pin{opacity:1}.guide{stroke:var(--fanframe-viz-border);stroke-width:1}.key{display:flex;gap:16px;margin:0;font-size:12px}.key svg{margin-right:4px;vertical-align:-2px}@media(prefers-reduced-motion:reduce){.day,.day .pin{transition:none}}</style>
+ <svg class="plot" viewBox="0 0 640 178" role="img" aria-label="11月18日至24日福州城区预报，高温依次24、20、20、20、20、22、20摄氏度，低温16、13、11、10、11、15、11摄氏度。"><path class="guide" d="M14 55H626M14 91H626M14 127H626"/><polyline class="high" points="${path(highs)}" fill="none" stroke="currentColor" stroke-width="2"/><polyline class="low" points="${path(lows)}" fill="none" stroke="currentColor" stroke-dasharray="4 4" stroke-width="2"/>${highs.map((t,i)=>`<g class="day"><title>${18+i} 日 · ${weather[i]} · ${lows[i]}–${t} ℃</title><rect x="${x(i)-36}" y="7" width="72" height="166" fill="transparent"/><text x="${x(i)}" y="${y(t)-9}" text-anchor="middle" fill="var(--hot)">${t}°</text><text x="${x(i)}" y="${y(lows[i])+16}" text-anchor="middle" fill="var(--cool)">${lows[i]}°</text><circle class="pin" cx="${x(i)}" cy="${y(t)}" r="3" fill="currentColor"/><circle class="pin" cx="${x(i)}" cy="${y(lows[i])}" r="3" fill="currentColor"/><use href="#fanframe-icon-${icons[i]}" x="${x(i)-9}" y="134" width="18" height="18"/><text x="${x(i)}" y="170" text-anchor="middle" fill="currentColor" font-size="12">${18+i}日</text></g>`).join('')}</svg>
+ <p class="key"><span class="high"><svg viewBox="0 0 16 8" width="16" height="8" aria-hidden="true"><path d="M0 4h16" stroke="currentColor"/></svg>高温</span><span class="low"><svg viewBox="0 0 16 8" width="16" height="8" aria-hidden="true"><path d="M0 4h16" stroke="currentColor" stroke-dasharray="3 2"/></svg>低温</span></p>`;
+ const body=fixture.views['fanframe-visualization']({node:{key:'test',data:{kind:'fanframe.visualize',version:2,title:'福州城区 · 11月18–24日天气预报',html}}});
+ const spec=body.type(body.props), figure=document.createElement(spec.type);figure.dataset.fanVisualize='';Object.assign(figure.style,spec.props.style);
+ for (const {type,props,children} of spec.children){const el=document.createElement(type);Object.assign(el.style,props.style);if(type==='iframe'){el.setAttribute('sandbox',props.sandbox);el.title=props.title;el.srcdoc=props.srcDoc;el.style.height='224px'}else el.textContent=children[0];figure.append(el)}
+ document.getElementById('card').replaceChildren(figure);
+}
+window.fixture=fixture;fixture.read=()=>Object.fromEntries([...CSS.highlights].map(([name,highlight])=>[name,[...highlight].map(r=>r.startContainer.data.slice(r.startOffset,r.endOffset)).join('')]));fixture.stop=()=>stop();draw();document.getElementById('theme').onclick=()=>{document.body.toggleAttribute('data-ds-dark-theme');draw()};
+</script>
+</body></html>
