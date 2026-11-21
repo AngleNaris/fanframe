@@ -5,8 +5,13 @@ const code = readFileSync(new URL('../lib/client.js', import.meta.url), 'utf8');
 const start = code.indexOf('    // Paint only.');
 const end = code.indexOf('    function apply(ctx)', start);
 assert.ok(start >= 0 && end > start);
-const { proseTones, proseRanges } = vm.runInNewContext(code.slice(start, end) + '\n({proseTones,proseRanges})', {
+const style = { dataset: {}, setAttribute() {}, remove() {} };
+const registry = new Map();
+const { proseTones, proseRanges, installProsePaint } = vm.runInNewContext(code.slice(start, end) + '\n({proseTones,proseRanges,installProsePaint})', {
   StaticRange: class { constructor(range) { Object.assign(this, range); } },
+  window: { CSS: { highlights: registry } }, Highlight: class extends Set {}, IntersectionObserver: class {},
+  document: { createElement: () => style, head: { appendChild() {} } }, watchRoots: () => () => {},
+  inkBlueDark: '#9cb8dc', inkAmberDark: '#ddbc86', inkBlueLight: '#42658e', inkAmberLight: '#815817',
 });
 let passed = 0;
 function check(fn) { fn(); passed++; }
@@ -46,4 +51,18 @@ check(() => {
   assert.match(coverage(ranges[4]) + coverage(ranges[5]), /仍有其他文字/);
 });
 check(() => assert.equal(proseRanges(element('p', children(leaf('0123456789'.repeat(2000))))).length, 0));
-console.log(JSON.stringify({passed, scope:'pure tokenizer and read-only highlight-range contract'}));
+check(() => {
+  const stop = installProsePaint();
+  const css = style.textContent;
+  const shades = name => [...css.matchAll(new RegExp(`(:where\\(body:not\\(\\[data-ds-dark-theme\\]\\)\\) )?::highlight\\(fanframe-prose-${name}\\)\\{color:color-mix\\(in srgb,var\\(--dsw-alias-label-primary,CanvasText\\) (\\d+)%`, 'g'))];
+  assert.deepEqual(shades('soft').map(m => Number(m[2])), [72, 67]);
+  assert.deepEqual(shades('mid').map(m => Number(m[2])), [86, 84]);
+  for (const name of ['soft', 'mid']) {
+    assert.equal(shades(name)[0][1], undefined);
+    assert.equal(shades(name)[1][1], ':where(body:not([data-ds-dark-theme])) ');
+  }
+  assert.match(css, /@media\(forced-colors:active\).*color:CanvasText/);
+  stop();
+  assert.equal(registry.size, 0);
+});
+console.log(JSON.stringify({passed, scope:'tokenizer, theme rules and read-only highlight range contract'}));

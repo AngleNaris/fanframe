@@ -10,11 +10,11 @@ const pkg = JSON.parse(read('package.json'));
 const checks = [];
 function check(name, fn) { fn(); checks.push(name); }
 
-check('package identity and beta publication channel', () => {
+check('stable package identity and latest publication channel', () => {
   assert.equal(pkg.name, 'fanframe');
-  assert.equal(pkg.version, '1.11.0-beta.9');
+  assert.equal(pkg.version, '1.11.1');
   assert.equal(pkg.publishConfig.registry, 'https://registry.npmjs.org/');
-  assert.equal(pkg.publishConfig.tag, 'beta');
+  assert.equal(pkg.publishConfig.tag, 'latest');
   assert.equal(pkg.publishConfig.access, 'public');
   assert.equal(pkg.license, 'MIT');
 });
@@ -22,10 +22,12 @@ check('explicit DSH lower bound with an open next-major ceiling and no install l
   assert.equal(pkg.engines.dsh, '>=0.2.1-rc.1 <0.4.0-0');
   assert.equal(pkg.dsh.client.platform, 'web');
   assert.deepEqual(pkg.dsh.client.inject, []);
-  assert.equal(pkg.scripts, undefined);
+  assert.deepEqual(Object.keys(pkg.scripts).sort(), ['build', 'test']);
   assert.equal(pkg.dependencies, undefined);
 });
-const expected = ['CHANGELOG.md', 'LICENSE', 'README.md', 'cordis.patch.yml', 'icon.svg', 'lib/client.js', 'lib/index.js', 'locale/en.json', 'locale/zh.json', 'package.json'];
+const expected = ['CHANGELOG.md', 'LICENSE', 'README.md', 'cordis.patch.yml', 'icon.svg', 'lib/MARKDOWN-IT-LICENSE',
+  'lib/PDFJS-LICENSE', 'lib/client.js', 'lib/index.js', 'locale/en.json', 'locale/zh.json', 'package.json',
+  'src/chat-preview/host.js', 'src/chat-preview/limits.js', 'src/chat-preview/read-attachment.js'];
 check('exact publication allowlist and present runtime resources', () => {
   assert.deepEqual([...pkg.files, 'package.json'].sort(), expected);
   for (const name of expected) assert.ok(fs.statSync(path.join(root, name)).isFile(), name);
@@ -47,12 +49,14 @@ check('Cordis entry uses the new package identity', () => {
   assert.doesNotMatch(patch, /name:\s*['"]?fan-de-hai/);
 });
 let captured;
-const sandbox = { window: { __ModuleLoader__: { load(spec) { captured = spec; } } } };
+const registrations = [];
+const sandbox = { window: { __ModuleLoader__: { load(spec) { registrations.push(spec.id); captured = spec; } } } };
 vm.runInNewContext(read('lib/client.js'), sandbox, { filename: 'fanframe/client.js', timeout: 3000 });
 check('current feedback candidate marker matches the manifest', () => {
   assert.ok(read('lib/client.js').includes("style.dataset.fanCandidate = '" + pkg.version + "';"));
 });
-check('Client module resolves under fanframe without runtime imports', () => {
+check('Only FanFrame is a browser module; base UI does not require preview services', () => {
+  assert.deepEqual(registrations, ['fanframe']);
   assert.equal(captured.id, pkg.name);
   const plugin = captured.factory(name => { throw new Error('Unexpected runtime import: ' + name); });
   assert.equal(JSON.stringify(plugin.inject), '[]');
@@ -61,6 +65,51 @@ check('Client module resolves under fanframe without runtime imports', () => {
   plugin.apply({ effect(fn, name) { assert.equal(typeof fn, 'function'); effects.push(name); } });
   assert.equal(effects.length, 15);
   assert.equal(new Set(effects).size, effects.length);
+  const imports = [];
+  const withReact = captured.factory(name => { imports.push(name); assert.equal(name, 'react'); return {}; });
+  const children = [];
+  withReact.apply({ plugin(child) { children.push(child); }, effect() {} });
+  assert.deepEqual(imports, ['react']);
+  assert.equal(children.length, 1);
+  assert.deepEqual([...children[0].inject], ['slots', 'locale', 'uiConversation', 'remote', 'remote.workspaceFiles']);
+  // Feature-detect older Host surfaces before touching registration APIs.
+  children[0].apply({ slots: {}, locale: {}, uiConversation: {}, remote: {} });
+});
+check('raster fences mount the inline reader only for a matching delivery', () => {
+  const React = {
+    createElement(type, props, ...children) { return { type, props, children }; },
+    useMemo: make => make(), useRef: () => ({ current: null }), useState: () => [true], useEffect() {},
+  };
+  let child, fence;
+  const plugin = captured.factory(() => React);
+  plugin.apply({ plugin(value) { child = value; }, effect() {} });
+  child.apply({
+    slots: { inject(_slot, run) { run(); }, register({ key }, render) { if (key === 'dsh-media') fence = render; } },
+    locale: { register() {} }, uiConversation: { events: { register() {} }, imageUrl() {} },
+    remote: { workspaceFiles: { stat() { throw new Error('Unexpected eager read'); }, readBytes() { throw new Error('Unexpected eager read'); } } },
+    effect() {}, on() {},
+  });
+  const path = 'C:\\图像 项目\\样片.png';
+  const turns = new Map();
+  const code = JSON.stringify({ path, title: '作品小样' });
+  const base = { code, sessionId: 'session-a', useChat: select => select({ timeline: { turns } }), t: key => key, children: 'native code block' };
+  assert.equal(fence({ ...base, streaming: true }), base.children);
+  const raster = fence(base);
+  assert.equal(raster.props.kind, 'image');
+  const missing = raster.type(raster.props);
+  assert.deepEqual(missing.children[0].children, ['inlineNotDelivered']);
+  turns.set(1, { data: new Map([['deliverables', { presented: [{ path }] }]]) });
+  const matched = raster.type(raster.props);
+  assert.equal(matched.props.className, 'dcp-inline-image');
+  assert.equal(matched.children[0].props.target.sessionId, base.sessionId);
+  assert.equal(matched.children[0].props.file.path, path);
+  assert.equal(matched.children[0].props.name, '作品小样');
+});
+const previewHost = await import('fanframe/chat-preview-host');
+check('separate preview Host entry owns the existing attachment route', () => {
+  assert.equal(previewHost.routePath, '/api/dsh-chat-preview.attachment');
+  assert.deepEqual(previewHost.inject, ['connection', 'sessionQuery', 'attachments']);
+  assert.match(read('cordis.patch.yml'), /name: 'fanframe\/chat-preview-host'/);
 });
 const host = await import(pathToFileURL(path.join(root, 'lib/index.js')).href);
 check('Host registers only the independent visualization tool through an injected registry', () => {

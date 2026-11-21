@@ -3,3 +3,5 @@
 - insert:
     - id: fanframe
       name: 'fanframe'
+    - id: fanframe-chat-preview-host
+      name: 'fanframe/chat-preview-host'

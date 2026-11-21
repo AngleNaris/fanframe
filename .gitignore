@@ -1,2 +1,5 @@
 # Local SDK extraction for engineering regression; do not republish upstream CSS.
 tests/assets/index-*.css
+node_modules/
+/*.tgz
+/notes/
